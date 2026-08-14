@@ -4,6 +4,30 @@ import { marked } from "marked";
 import { api } from "./api";
 import type { Activity, JournalSummary, TimelineDay, View } from "./types";
 import "./styles.css";
+import {
+  warn,
+  debug,
+  trace,
+  info,
+  error,
+} from '@tauri-apps/plugin-log';
+
+function forwardConsole(
+  fnName: 'log' | 'debug' | 'info' | 'warn' | 'error',
+  logger: (message: string) => Promise<void>
+) {
+  const original = console[fnName];
+  console[fnName] = (message) => {
+    original(message);
+    logger(message);
+  };
+}
+
+forwardConsole('log', trace);
+forwardConsole('debug', debug);
+forwardConsole('info', info);
+forwardConsole('warn', warn);
+forwardConsole('error', error);
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -159,7 +183,10 @@ async function saveJournal() {
         state.title,
         state.content,
       );
-      state.updatedAt = journal.updated_at;
+	  state.updatedAt = journal.updated_at;
+	  
+	  const pairs = state.activities.map(x => [x.description, x.category]);
+	  await api.updateActivities(pairs, state.selectedId);
     }
     state.dirty = false;
     await loadJournals();
@@ -373,10 +400,10 @@ function renderJournalView() {
           <div class="activities-grid">
             ${state.activities
               .map(
-                (a) => `
+                (a, index) => `
               <div class="activity-card">
-                <span class="activity-badge" style="background:${categoryColor(a.category)}">${escapeHtml(a.category)}</span>
-                <span class="activity-desc">${escapeHtml(a.description)}</span>
+                <span contenteditable="true" class="activity-badge activity-badge${index}" style="background:${categoryColor(a.category)}">${escapeHtml(a.category)}</span>
+                <span contenteditable="true" class="activity-desc activity-desc${index}">${escapeHtml(a.description)}</span>
               </div>`,
               )
               .join("")}
@@ -554,6 +581,26 @@ function bindEvents() {
     const saveBtn = document.querySelector("[data-action='save']");
     if (saveBtn) saveBtn.textContent = "Save *";
   });
+  
+  for (let i=0; i<state.activities.length; i++) {
+	  const activity_badge = document.querySelector<HTMLTextAreaElement>(`.activity-badge${i}`);
+	  activity_badge?.addEventListener("input", (event) => {
+		state.activities[i].category = event.target.innerText;
+		state.dirty = true;
+		updatePreview();
+		const saveBtn = document.querySelector("[data-action='save']");
+		if (saveBtn) saveBtn.textContent = "Save *";
+	  });
+	  
+	  const activity_desc = document.querySelector<HTMLTextAreaElement>(`.activity-desc${i}`);
+	  activity_desc?.addEventListener("input", (event) => {
+		state.activities[i].description = event.target.innerText;
+		state.dirty = true;
+		updatePreview();
+		const saveBtn = document.querySelector("[data-action='save']");
+		if (saveBtn) saveBtn.textContent = "Save *";
+	  });
+  }
 
   const apiKeyInput = document.querySelector<HTMLInputElement>(".settings-input");
   apiKeyInput?.addEventListener("input", () => {

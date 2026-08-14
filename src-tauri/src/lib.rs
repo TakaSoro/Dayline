@@ -7,6 +7,7 @@ use models::{Activity, Journal, JournalSummary, TimelineDay};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::Manager;
+use tauri_plugin_log::{Target, TargetKind};
 
 struct AppState {
     db: Arc<Database>,
@@ -66,9 +67,18 @@ async fn analyze_journal(
         .map(|a| (a.description.clone(), a.category.clone()))
         .collect();
 
-    state
-        .db
-        .replace_activities(id, &activity_date, &pairs)
+    state.db.replace_activities(id, &activity_date, &pairs)
+}
+
+#[tauri::command]
+fn update_activities(
+    state: tauri::State<'_, AppState>,
+    pairs: Vec<(String, String)>,
+    id: i64,
+) -> Result<Vec<Activity>, String> {
+    let journal = state.db.get_journal(id)?;
+    let activity_date = journal.created_at.chars().take(10).collect::<String>();
+    state.db.replace_activities(id, &activity_date, &pairs)
 }
 
 #[tauri::command]
@@ -111,10 +121,7 @@ fn import_journal_image(
     std::fs::create_dir_all(&images_dir).map_err(|e| e.to_string())?;
 
     let source = std::path::Path::new(&source_path);
-    let ext = source
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("png");
+    let ext = source.extension().and_then(|e| e.to_str()).unwrap_or("png");
 
     let unique_name = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let dest_path = images_dir.join(&unique_name);
@@ -126,13 +133,15 @@ fn import_journal_image(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(tauri_plugin_log::log::LevelFilter::Info)
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let app_data_dir = app
-                .path()
-                .app_data_dir()
-                .map_err(|e| e.to_string())?;
+            let app_data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
             let db = Database::new(app_data_dir.clone()).map_err(|e| e.to_string())?;
             app.manage(AppState {
                 db: Arc::new(db),
@@ -140,6 +149,13 @@ pub fn run() {
             });
             Ok(())
         })
+        .plugin(
+			tauri_plugin_log::Builder::new()
+				.target(tauri_plugin_log::Target::new(
+					tauri_plugin_log::TargetKind::Stdout,
+				))
+				.build(),
+		)
         .invoke_handler(tauri::generate_handler![
             create_journal,
             update_journal,
@@ -148,6 +164,7 @@ pub fn run() {
             list_journals,
             analyze_journal,
             get_journal_activities,
+            update_activities,
             get_timeline,
             get_categories,
             set_gemini_api_key,

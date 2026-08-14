@@ -75,16 +75,18 @@ impl Database {
         content: String,
     ) -> Result<Journal, String> {
         let now = Utc::now().to_rfc3339();
-        let conn = self.conn.lock().map_err(|e| e.to_string())?;
-        let updated = conn
-            .execute(
-                "UPDATE journals SET title = ?1, content = ?2, updated_at = ?3 WHERE id = ?4",
-                params![title, content, now, id],
-            )
-            .map_err(|e| e.to_string())?;
-        if updated == 0 {
-            return Err("Journal not found".into());
-        }
+        { 
+			let conn = self.conn.lock().map_err(|e| e.to_string())?;
+			let updated = conn
+				.execute(
+					"UPDATE journals SET title = ?1, content = ?2, updated_at = ?3 WHERE id = ?4",
+					params![title, content, now, id],
+				)
+				.map_err(|e| e.to_string())?;
+			if updated == 0 {
+				return Err("Journal not found".into());
+			}
+		}
         self.get_journal(id)
     }
 
@@ -137,7 +139,8 @@ impl Database {
                 })
             })
             .map_err(|e| e.to_string())?;
-        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
     }
 
     pub fn replace_activities(
@@ -190,7 +193,8 @@ impl Database {
                 })
             })
             .map_err(|e| e.to_string())?;
-        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
     }
 
     pub fn get_timeline(&self, category: Option<String>) -> Result<Vec<TimelineDay>, String> {
@@ -214,7 +218,9 @@ impl Database {
                     })
                 })
                 .map_err(|e| e.to_string())?;
-            activities = rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
+            activities = rows
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
         } else {
             let mut stmt = conn
                 .prepare(
@@ -232,7 +238,9 @@ impl Database {
                     })
                 })
                 .map_err(|e| e.to_string())?;
-            activities = rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())?;
+            activities = rows
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
         }
 
         let mut days: Vec<TimelineDay> = Vec::new();
@@ -258,7 +266,8 @@ impl Database {
         let rows = stmt
             .query_map([], |row| row.get(0))
             .map_err(|e| e.to_string())?;
-        rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_string())
     }
 
     pub fn set_setting(&self, key: &str, value: &str) -> Result<(), String> {

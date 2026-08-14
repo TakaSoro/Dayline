@@ -19,6 +19,8 @@ export const api = {
   getJournalActivities: (journalId: number) =>
     invoke<Activity[]>("get_journal_activities", { journalId }),
 
+  updateActivities: (pairs: [string, string][], id: number) => invoke<Activity[]>("update_activities", { pairs, id }),
+
   getTimeline: (category?: string) =>
     invoke<TimelineDay[]>("get_timeline", { category: category ?? null }),
 
