@@ -1,5 +1,5 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { marked } from "marked";
 import { api } from "./api";
 import type { Activity, JournalSummary, TimelineDay, View } from "./types";
@@ -173,7 +173,7 @@ async function saveJournal() {
 }
 
 async function deleteJournal(id: number) {
-  if (!confirm("Delete this journal entry?")) return;
+  if (!(await confirm("Delete this journal entry?", { title: 'Delete Entry', kind: 'warning' }))) return;
   await api.deleteJournal(id);
   if (state.selectedId === id) newJournal();
   await loadJournals();
