@@ -461,7 +461,7 @@ function renderTimelineView() {
                   ${day.activities
                     .map(
                       (a) => `
-                    <div class="timeline-card">
+                    <div class="timeline-card" data-id="${a.journal_id}">
                       <span class="activity-badge" style="background:${categoryColor(a.category)}">${escapeHtml(a.category)}</span>
                       <p>${escapeHtml(a.description)}</p>
                     </div>`,
@@ -538,6 +538,14 @@ function bindEvents() {
     el.addEventListener("click", (e) => {
       if ((e.target as HTMLElement).closest("[data-delete]")) return;
       const id = Number(el.getAttribute("data-id"));
+      loadJournal(id);
+    });
+  });
+  
+  document.querySelectorAll(".timeline-card").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      const id = Number(el.getAttribute("data-id"));
+	  switchView("journal");
       loadJournal(id);
     });
   });
