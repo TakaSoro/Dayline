@@ -1,12 +1,13 @@
 # Journal
 
-A personal journal desktop app built with Rust and Tauri. Write markdown entries, analyze them with Gemini AI to extract activities, and visualize your daily timeline.
+A personal journal desktop app built with Rust and Tauri.
+Write markdown entries, analyze them with Gemini to extract activities, and visualize your daily timeline.
 
 ## Features
 
 - **Markdown journal entries** with live preview and image support
 - **SQLite storage** for journals and extracted activities
-- **Gemini AI analysis** — automatically categorizes things you did (Work, Health, Social, etc.)
+- **Gemini analysis** — automatically categorizes things you did (Work, Health, Social, etc.)
 - **Timeline visualization** with category filtering
 
 ## Prerequisites
