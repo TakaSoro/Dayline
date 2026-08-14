@@ -47,3 +47,7 @@ npm run tauri build
 - **Backend:** Rust, Tauri 2, SQLite (rusqlite)
 - **Frontend:** TypeScript, Vite, Marked
 - **AI:** Google Gemini API
+
+## AI Acknowledgements
+
+- Gemini
