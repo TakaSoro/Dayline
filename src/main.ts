@@ -1,6 +1,7 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { open, confirm } from "@tauri-apps/plugin-dialog";
 import { marked } from "marked";
+import Fuse from 'fuse.js'
 import { api } from "./api";
 import type { Activity, JournalSummary, TimelineDay, View } from "./types";
 import "./styles.css";
@@ -242,10 +243,12 @@ async function insertImage() {
   updatePreview();
 }
 
-async function loadTimeline() {
-  state.timeline = await api.getTimeline(
-    state.selectedCategory || undefined,
-  );
+async function loadTimeline(reload_timeline: boolean = true) {
+  if (reload_timeline) {
+	state.timeline = await api.getTimeline(
+      state.selectedCategory || undefined,
+    );
+  }
   state.categories = await api.getCategories();
   render();
 }
@@ -435,6 +438,19 @@ function renderTimelineView() {
             )
             .join("")}
         </div>
+		<div class="activity-search">
+		  <input
+            class="search-input"
+            type="text"
+            placeholder="Search..."
+          />
+		  <button class="search-btn" data-action="search" aria-label="Search">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+			  <circle cx="11" cy="11" r="8"></circle>
+			  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+	   	    </svg>
+		  </button>
+		</div>
       </div>
 
       <div class="timeline-content">
@@ -533,6 +549,27 @@ function bindEvents() {
   document.querySelector("[data-action='analyze']")?.addEventListener("click", analyzeJournal);
   document.querySelector("[data-action='insert-image']")?.addEventListener("click", insertImage);
   document.querySelector("[data-action='save-api-key']")?.addEventListener("click", saveApiKey);
+  
+  document.querySelector("[data-action='search']")?.addEventListener("click", () => {
+	const search_input = document.querySelector(".search-input");
+	if (search_input.value == "") {
+	  loadTimeline();
+	  return;
+	}
+	const docs = state.timeline.map(day => day.activities).flat();
+	const fuse = new Fuse(docs, {
+	  keys: ['description', 'category']
+	});
+	let result = fuse.search(search_input.value);
+	result = result.map(x => {
+	  const day: TimelineDay = {};
+	  day.activities = [x["item"]];
+	  day.date = x["item"].activity_date;
+	  return day;
+	});
+	state.timeline = result;
+	loadTimeline(false);
+  });
 
   document.querySelectorAll(".journal-item").forEach((el) => {
     el.addEventListener("click", (e) => {

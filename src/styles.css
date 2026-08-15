@@ -234,6 +234,19 @@ body {
   white-space: nowrap;
 }
 
+.search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  background: var(--accent);
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -300,6 +313,23 @@ body {
 }
 
 .title-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input {
+  width: 90%;
+  border: none;
+  background: var(--bg-hover);
+  font-family: var(--font);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  outline: none;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+}
+
+.search-input::placeholder {
   color: var(--text-muted);
 }
 
