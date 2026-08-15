@@ -570,6 +570,13 @@ function bindEvents() {
 	state.timeline = result;
 	loadTimeline(false);
   });
+  
+  document.querySelector(".search-input")?.addEventListener("keydown", (event) => {
+	if (event.key === "Enter") {
+	  event.preventDefault();
+	  document.querySelector("[data-action='search']")?.click();
+    }
+  });
 
   document.querySelectorAll(".journal-item").forEach((el) => {
     el.addEventListener("click", (e) => {
