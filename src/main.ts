@@ -399,7 +399,10 @@ function renderJournalView() {
         state.activities.length > 0
           ? `
         <div class="activities-panel">
-          <h3>Extracted Activities</h3>
+		  <div class="activity-header">
+            <h3>Extracted Activities</h3>
+		    <button class="activity-add" title="Add">+</button>
+		  </div>
           <div class="activities-grid">
             ${state.activities
               .map(
@@ -640,16 +643,15 @@ function bindEvents() {
 	  activity_badge?.addEventListener("input", (event) => {
 		state.activities[i].category = event.target.innerText;
 		state.dirty = true;
-		updatePreview();
 		const saveBtn = document.querySelector("[data-action='save']");
 		if (saveBtn) saveBtn.textContent = "Save *";
 	  });
 	  
 	  const activity_desc = document.querySelector<HTMLTextAreaElement>(`.activity-desc${i}`);
+
 	  activity_desc?.addEventListener("input", (event) => {
 		state.activities[i].description = event.target.innerText;
 		state.dirty = true;
-		updatePreview();
 		const saveBtn = document.querySelector("[data-action='save']");
 		if (saveBtn) saveBtn.textContent = "Save *";
 	  });
@@ -661,11 +663,27 @@ function bindEvents() {
         state.activities.splice(i, 1);
 		state.dirty = true;
 		document.querySelector(`.activity-card${i}`).remove();
-		updatePreview();
 		const saveBtn = document.querySelector("[data-action='save']");
 		if (saveBtn) saveBtn.textContent = "Save *";
 	  });
   }
+  
+  const activity_add = document.querySelector(`.activity-add`);
+  activity_add?.addEventListener("click", async (event) => {
+	event.stopPropagation();
+	const new_activity: Activity = { id: 0, journal_id: state.seletedId, description: "Activity", category: "Work", activity_date: state.createdAt };
+    state.activities.push(new_activity);
+	const activity_card = document.createElement("div");
+	activity_card.classList.add("activity-card");
+	activity_card.classList.add(`activity-card${state.activities.length}`);
+	activity_card.innerHTML = `<span contenteditable="true" class="activity-badge activity-badge${state.activities.length}" style="background:${categoryColor("Work")}">Work</span>
+                <span contenteditable="true" class="activity-desc activity-desc${state.activities.length}">Activity</span>
+				<button class="activity-delete activity-delete${state.activities.length}" title="Delete">&times;</button>`,
+    document.querySelector(".activities-grid").appendChild(activity_card);
+	state.dirty = true;
+	const saveBtn = document.querySelector("[data-action='save']");
+    if (saveBtn) saveBtn.textContent = "Save *";
+  });
 
   const apiKeyInput = document.querySelector<HTMLInputElement>(".settings-input");
   apiKeyInput?.addEventListener("input", () => {

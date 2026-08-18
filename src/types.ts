@@ -15,7 +15,7 @@ export interface JournalSummary {
 }
 
 export interface Activity {
-  id: number;
+  id: number; // unused in ts
   journal_id: number;
   description: string;
   category: string;
