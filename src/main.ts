@@ -404,9 +404,10 @@ function renderJournalView() {
             ${state.activities
               .map(
                 (a, index) => `
-              <div class="activity-card">
+              <div class="activity-card activity-card${index}">
                 <span contenteditable="true" class="activity-badge activity-badge${index}" style="background:${categoryColor(a.category)}">${escapeHtml(a.category)}</span>
                 <span contenteditable="true" class="activity-desc activity-desc${index}">${escapeHtml(a.description)}</span>
+				<button class="activity-delete activity-delete${index}" title="Delete">&times;</button>
               </div>`,
               )
               .join("")}
@@ -648,6 +649,18 @@ function bindEvents() {
 	  activity_desc?.addEventListener("input", (event) => {
 		state.activities[i].description = event.target.innerText;
 		state.dirty = true;
+		updatePreview();
+		const saveBtn = document.querySelector("[data-action='save']");
+		if (saveBtn) saveBtn.textContent = "Save *";
+	  });
+	  
+	  const activity_del = document.querySelector(`.activity-delete${i}`);
+	  activity_del?.addEventListener("click", async (event) => {
+		event.stopPropagation();
+		if (!(await confirm("Delete this activity?", { title: 'Delete Activity', kind: 'warning' }))) return;
+        state.activities.splice(i, 1);
+		state.dirty = true;
+		document.querySelector(`.activity-card${i}`).remove();
 		updatePreview();
 		const saveBtn = document.querySelector("[data-action='save']");
 		if (saveBtn) saveBtn.textContent = "Save *";
